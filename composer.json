@@ -1,0 +1,23 @@
+{
+    "name": "denisoduor/sqq",
+    "description": "Simple functions for interacting with msql db",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "Test\\": "tests/"
+        },
+        "files": [
+            "common/helper.php"
+        ]
+    },
+    "authors": [
+        {
+            "name": "Deskola",
+            "email": "denisogunde@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
