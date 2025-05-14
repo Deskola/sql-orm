@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Migrations;
+namespace DeskolaOrm\Migrations;
 
-use App\Connections\DbConnection;
-use App\Exceptions\MigrationException;
+use DeskolaOrm\Connections\Database;
 use Exception;
 
 enum Constraints
@@ -11,30 +10,41 @@ enum Constraints
     case PrimaryKey;
     case PrimaryKeyAuto;
     case ForeignKey;
-    case NotNull;
     case Unique;
     case Check;
     case Default;
     case Null;
 }
 
-class TableMigration
+class Migration
 {
     private array $columns = [];
     private array $special_constraints = [];
 
-    public function __construct(private DbConnection $dbConnection, private string $tableName)
+    public function __construct(private Database $connection, private string $table)
     {
+
     }
 
-    public function addColumn(string $column, string $type, mixed $length = null, array $constraints = [], array $fkReference = [], mixed $defaultValue = null, mixed $checkIf = null, mixed $comment = null): self
+    /**
+     * Add new column
+     * @param string $column  
+     * @param string $type e.g varchar,int,text,longtext,date  
+     * @param int $length   
+     * @param array $constraints  
+     * @param array $fkReference  
+     * @param string $defaultValue  
+     * @param string $checkIf  
+     * @param string $comment 
+     */
+    public function addColumn(string $column, string $type, ?int $length = null, array $constraints = [], array $fkReference = [], mixed $defaultValue = null, mixed $checkIf = null, ?string $comment = null): self
     {
         // build column features
         $column_builder = "$column,";
 
         // check if length is provided
-        $column_builder .= !empty($length) ? "$type($length)," : "$type,";
-        
+        $column_builder .= !empty($length) ? ($type == 'string' ? "varchar($length)" : "$type($length),") : "$type,";
+
         // constraint
         if (!empty($constraints)) {
             foreach ($constraints as $constraint) {
@@ -43,15 +53,21 @@ class TableMigration
                         Constraints::PrimaryKey => $this->special_constraints['primary key'][] = $column,
                         Constraints::PrimaryKeyAuto => $this->special_constraints['primary key auto'] = $column,
                         Constraints::ForeignKey => $this->special_constraints['foreign key'][$column] = $fkReference,
-                        Constraints::NotNull => $column_builder .= 'not null,',
                         Constraints::Null => $column_builder .= 'null,',
                         Constraints::Unique => $column_builder .= 'unique,',
-                        Constraints::Default => $column_builder .= !empty($defaultValue) ? "DEFAULT $defaultValue," : "DEFAULT NULL,",
                         Constraints::Check => $this->special_constraints['constraint check'][$column] = $checkIf,
-                        default => ''
+                        default => $column_builder .= !empty($defaultValue) ? "default $defaultValue," : "default null,"
                     };
                 }
             }
+
+            // null is not defined in constraints
+            if (!in_array(Constraints::Null, $constraints)) {
+                $column_builder .= " not null,";
+            }
+
+        } else {
+            $column_builder .= " not null,";
         }
 
         array_push($this->columns, str_replace(',', ' ', $column_builder));
@@ -59,10 +75,16 @@ class TableMigration
         return $this;
     }
 
-    public function create()
+    public function create(): void
     {
         try {
-            $sql = "create table {$this->tableName}";
+
+            // check if table exist
+            if ($this->connection->hasTable($this->table))
+                return;
+
+            // create table
+            $sql = "create table {$this->table}";
             $sql .= '(';
 
             foreach ($this->columns as $key => $column) {
@@ -97,11 +119,13 @@ class TableMigration
 
             $sql = rtrim($sql, ',') . ');';
             //dd($sql);
-            return $this->dbConnection->connect()->exec($sql);
+            $this->connection->getConnection()->exec($sql);
 
         } catch (Exception $e) {
             throw $e;
             //throw new  MigrationException($e->getMessage(), 112);
+        } finally {
+            $this->connection->close();
         }
     }
 }

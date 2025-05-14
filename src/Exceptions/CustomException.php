@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions;
+namespace DeskolaOrm\Exceptions;
 
 use Exception;
 
@@ -11,7 +11,7 @@ abstract class CustomException extends Exception implements ExceptionInterface
     {
         if (!$message) {
 
-            $message = 'Unknown '. get_class($this);
+            $message = 'Unknown ' . get_class($this);
         }
 
         parent::__construct($message, $code);
