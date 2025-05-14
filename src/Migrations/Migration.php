@@ -7,9 +7,9 @@ use Exception;
 
 enum Constraints
 {
-    case PrimaryKey;
-    case PrimaryKeyAuto;
-    case ForeignKey;
+    case PK;
+    case PKAuto;
+    case FK;
     case Unique;
     case Check;
     case Default;
@@ -37,7 +37,7 @@ class Migration
      * @param string $checkIf  
      * @param string $comment 
      */
-    public function addColumn(string $column, string $type, ?int $length = null, array $constraints = [], array $fkReference = [], mixed $defaultValue = null, mixed $checkIf = null, ?string $comment = null): self
+    public function addColumn(string $column, string $type, ?int $length = null, array $constraints = [], array $fkRef = [], mixed $defaultVal = null, mixed $checkIf = null, ?string $comment = null): self
     {
         // build column features
         $column_builder = "$column,";
@@ -50,13 +50,13 @@ class Migration
             foreach ($constraints as $constraint) {
                 if ($constraint instanceof Constraints) {
                     match ($constraint) {
-                        Constraints::PrimaryKey => $this->special_constraints['primary key'][] = $column,
-                        Constraints::PrimaryKeyAuto => $this->special_constraints['primary key auto'] = $column,
-                        Constraints::ForeignKey => $this->special_constraints['foreign key'][$column] = $fkReference,
+                        Constraints::PK => $this->special_constraints['primary key'][] = $column,
+                        Constraints::PKAuto => $this->special_constraints['primary key auto'] = $column,
+                        Constraints::FK => $this->special_constraints['foreign key'][$column] = $fkRef,
                         Constraints::Null => $column_builder .= 'null,',
                         Constraints::Unique => $column_builder .= 'unique,',
                         Constraints::Check => $this->special_constraints['constraint check'][$column] = $checkIf,
-                        default => $column_builder .= !empty($defaultValue) ? "default $defaultValue," : "default null,"
+                        default => $column_builder .= !empty($defaultVal) ? "default $defaultVal," : "default null,"
                     };
                 }
             }

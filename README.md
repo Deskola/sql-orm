@@ -1,12 +1,12 @@
-<?php
+# Simple ORM for Learning SQL
 
-require_once __DIR__ . '/vendor/autoload.php';
+## Create MIgrations
 
+```php
 use DeskolaOrm\Connections\Database;
 use DeskolaOrm\Migrations\Constraints;
 use DeskolaOrm\Migrations\Migration;
 
-// db connectio
 try {
     $hospital_db = Database::getInstance('localhost', 'hospitaldb', 'root', '');
 
@@ -42,3 +42,4 @@ try {
 } catch (RuntimeException $e) {
     echo "Error: " . $e->getMessage();
 }
+```
